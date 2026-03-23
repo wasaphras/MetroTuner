@@ -1,0 +1,26 @@
+# Save as: android/key.properties   (NOT the project root — Gradle only loads android/key.properties)
+# Replace the REPLACE_* values. Never commit key.properties or your .jks file (android/.gitignore).
+#
+# --- What each property means (plain English) ---
+#
+# storePassword
+#   Password for the KEYSTORE FILE (.jks) — the first password keytool asked when you created it.
+#
+# keyPassword
+#   Password for the KEY ENTRY inside that file. keytool asks a second time; if you pressed Enter
+#   to use the SAME password as the keystore, put THE SAME STRING HERE as in storePassword.
+#   If you only ever typed ONE password: storePassword and keyPassword must be IDENTICAL.
+#
+# keyAlias
+#   The NAME of the key (not a password). It must match what you passed to -alias when you ran
+#   keytool -genkey (our docs use "upload"). To see aliases: keytool -list -keystore <path-to.jks>
+#
+# storeFile
+#   Path to the .jks file RELATIVE TO THE android/ DIRECTORY.
+#   Example: upload-keystore.jks  means the file must be at  android/upload-keystore.jks
+#   If your keystore lives elsewhere, use a relative path from android/ (e.g. ../my-key.jks) or an absolute path.
+#
+storePassword=REPLACE_WITH_YOUR_KEYSTORE_PASSWORD
+keyPassword=REPLACE_WITH_YOUR_KEY_PASSWORD_OR_SAME_AS_STORE
+keyAlias=upload
+storeFile=upload-keystore.jks
