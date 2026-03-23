@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:metrotuner/core/audio/audio_engine.dart';
 import 'package:metrotuner/core/audio/metronome_click_sound_settings.dart';
+import 'package:metrotuner/features/settings/reference_concert_pitch_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists and applies metronome click synthesis (local only).
@@ -16,16 +17,12 @@ class MetronomeClickSoundNotifier
       final p = await SharedPreferences.getInstance();
       final beatNew = p.getInt(kMetronomeClickBeatMidiPrefsKey);
       final downNew = p.getInt(kMetronomeClickDownbeatMidiPrefsKey);
-      final concertStored = p.containsKey(kMetronomeClickConcertA4PrefsKey)
-          ? p.getBool(kMetronomeClickConcertA4PrefsKey)
-          : null;
 
       final MetronomeClickSoundSettings s;
       if (beatNew != null && downNew != null) {
         s = metronomeClickSoundSettingsFromPrefs(
           beatMidi: beatNew,
           downbeatMidi: downNew,
-          concertA4: concertStored ?? true,
           waveformIndex: p.getInt(kMetronomeClickWaveformIndexPrefsKey),
           presetIndex: p.getInt(kMetronomeClickPresetIndexPrefsKey),
           clickDurationMs: p.getDouble(kMetronomeClickDurationMsPrefsKey),
@@ -35,7 +32,6 @@ class MetronomeClickSoundNotifier
       } else {
         s = metronomeClickSoundSettingsFromLegacyPrefs(
           baseMidi: p.getInt(kMetronomeClickBaseMidiPrefsKey),
-          a4Hz: p.getDouble(kMetronomeClickA4HzPrefsKey),
           accentOffsetSemitones: p.getInt(kMetronomeClickAccentOffsetPrefsKey),
           waveformIndex: p.getInt(kMetronomeClickWaveformIndexPrefsKey),
           presetIndex: p.getInt(kMetronomeClickPresetIndexPrefsKey),
@@ -45,7 +41,10 @@ class MetronomeClickSoundNotifier
         );
       }
       state = s;
-      AudioEngine.instance.applyClickSoundSettings(s);
+      final refHz = referenceA4HzFromConcert(
+        concert: ref.read(referenceConcertPitchProvider),
+      );
+      AudioEngine.instance.applyClickSoundSettings(s, referenceA4Hz: refHz);
       await _persist(s);
     } on Object {
       // Tests / platforms without prefs: keep default.
@@ -56,7 +55,6 @@ class MetronomeClickSoundNotifier
     final s = metronomeClickSoundSettingsFromPrefs(
       beatMidi: value.beatMidi,
       downbeatMidi: value.downbeatMidi,
-      concertA4: value.concertA4,
       waveformIndex: value.waveformIndex,
       presetIndex: value.preset.index,
       clickDurationMs: value.clickDurationMs,
@@ -64,7 +62,10 @@ class MetronomeClickSoundNotifier
       echo: value.echo,
     );
     state = s;
-    AudioEngine.instance.applyClickSoundSettings(s);
+    final refHz = referenceA4HzFromConcert(
+      concert: ref.read(referenceConcertPitchProvider),
+    );
+    AudioEngine.instance.applyClickSoundSettings(s, referenceA4Hz: refHz);
     await _persist(s);
   }
 
@@ -73,7 +74,6 @@ class MetronomeClickSoundNotifier
       final p = await SharedPreferences.getInstance();
       await p.setInt(kMetronomeClickBeatMidiPrefsKey, s.beatMidi);
       await p.setInt(kMetronomeClickDownbeatMidiPrefsKey, s.downbeatMidi);
-      await p.setBool(kMetronomeClickConcertA4PrefsKey, s.concertA4);
       await p.setInt(kMetronomeClickWaveformIndexPrefsKey, s.waveformIndex);
       await p.setInt(kMetronomeClickPresetIndexPrefsKey, s.preset.index);
       await p.setDouble(kMetronomeClickDurationMsPrefsKey, s.clickDurationMs);
@@ -85,7 +85,7 @@ class MetronomeClickSoundNotifier
   }
 }
 
-/// Metronome click sound settings (pitch, reference A4, waveform).
+/// Metronome click sound settings (MIDI pitch, waveform, effects).
 final metronomeClickSoundProvider =
     NotifierProvider<MetronomeClickSoundNotifier, MetronomeClickSoundSettings>(
       MetronomeClickSoundNotifier.new,

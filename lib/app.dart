@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:metrotuner/app_shell.dart';
 import 'package:metrotuner/core/audio/audio_engine.dart';
+import 'package:metrotuner/core/audio/metronome_click_sound_settings.dart';
 import 'package:metrotuner/features/metronome/metronome_notifier.dart';
 import 'package:metrotuner/features/settings/accent_settings.dart';
 import 'package:metrotuner/features/settings/metronome_click_sound_notifier.dart';
+import 'package:metrotuner/features/settings/reference_concert_pitch_notifier.dart';
 import 'package:metrotuner/features/settings/tuner_strip_edge_settings.dart';
 import 'package:metrotuner/features/tuner/tuner_notifier.dart';
 import 'package:metrotuner/ui/theme/app_theme.dart';
@@ -34,7 +36,10 @@ class _MetroTunerAppState extends ConsumerState<MetroTunerApp> {
     unawaited(ref.read(accentSeedProvider.notifier).loadFromPrefs());
     unawaited(ref.read(tunerStripEdgeProvider.notifier).loadFromPrefs());
     unawaited(ref.read(metronomeProvider.notifier).loadMeterFromPrefs());
-    unawaited(ref.read(metronomeClickSoundProvider.notifier).loadFromPrefs());
+    unawaited(() async {
+      await ref.read(referenceConcertPitchProvider.notifier).loadFromPrefs();
+      await ref.read(metronomeClickSoundProvider.notifier).loadFromPrefs();
+    }());
   }
 
   void _onAppPaused() {
@@ -57,6 +62,15 @@ class _MetroTunerAppState extends ConsumerState<MetroTunerApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(referenceConcertPitchProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      AudioEngine.instance.applyClickSoundSettings(
+        ref.read(metronomeClickSoundProvider),
+        referenceA4Hz: referenceA4HzFromConcert(concert: next),
+      );
+    });
     final accent = ref.watch(accentSeedProvider);
     return MaterialApp(
       title: 'MetroTuner',

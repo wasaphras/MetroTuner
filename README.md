@@ -18,7 +18,7 @@ Captured from the Android build (1080×2400). Paths are relative to the repo roo
 |:---:|:---:|
 | ![Tuner: pitch strip, readouts, Start](docs/screenshots/tuner.png) | ![Metronome: tempo, time signature, transport](docs/screenshots/metronome.png) |
 
-**Settings** — accent color presets, custom color, and pitch strip on the left or right (saved locally only).
+**Settings** — accent color, **concert pitch** (440 Hz or 432 Hz) for tuner and clicks, and pitch strip on the left or right (saved locally only).
 
 ![Settings: General — accent color and pitch strip](docs/screenshots/settings.png)
 
@@ -28,7 +28,7 @@ More assets or recordings can live under [docs/screenshots/](docs/screenshots/) 
 
 - **Tuner:** Vertical pitch strip; place it on the **left** or **right** in Settings.
 - **Theme:** **Accent color** from presets or a custom RGB value; stored on device only.
-- **Metronome:** BPM, meters, tap tempo, and a **Metronome sound** screen (pitches, A4 vs 432 Hz, waveforms, echo) from the Metronome tab.
+- **Metronome:** BPM, meters, tap tempo, and a **Metronome sound** screen (click pitches, waveforms, echo) from the Metronome tab. **Concert pitch** (440 vs 432 Hz) lives in **Settings → General** and applies to the tuner and metronome clicks.
 
 ## Privacy
 

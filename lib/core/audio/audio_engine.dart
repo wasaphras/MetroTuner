@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:metrotuner/core/audio/metronome_click_sound_settings.dart';
 import 'package:metrotuner/core/audio/metronome_echo_mapping.dart';
+import 'package:metrotuner/core/pitch/note_math.dart';
 
 /// Singleton facade over SoLoud for MetroTuner playback (metronome; later
 /// tuner output).
@@ -79,7 +80,10 @@ class AudioEngine {
         }
       }
       _nativeReady = true;
-      applyClickSoundSettings(MetronomeClickSoundSettings.defaults());
+      applyClickSoundSettings(
+        MetronomeClickSoundSettings.defaults(),
+        referenceA4Hz: NoteMath.defaultA4Hz,
+      );
     } on Object {
       _nativeReady = false;
       _tickNormal = null;
@@ -90,7 +94,10 @@ class AudioEngine {
   /// Updates waveform frequency, shape, and scales for both click sources.
   /// Cheap to call when settings change; [playMetronomeClick] uses last applied
   /// settings.
-  void applyClickSoundSettings(MetronomeClickSoundSettings settings) {
+  void applyClickSoundSettings(
+    MetronomeClickSoundSettings settings, {
+    required double referenceA4Hz,
+  }) {
     _clickSettings = settings;
     if (!_nativeReady) {
       return;
@@ -107,8 +114,8 @@ class AudioEngine {
     final wf = WaveForm.values[idx];
     SoLoud.instance.setWaveform(normal, wf);
     SoLoud.instance.setWaveform(accent, wf);
-    SoLoud.instance.setWaveformFreq(normal, settings.normalHz);
-    SoLoud.instance.setWaveformFreq(accent, settings.accentHz);
+    SoLoud.instance.setWaveformFreq(normal, settings.normalHz(referenceA4Hz));
+    SoLoud.instance.setWaveformFreq(accent, settings.accentHz(referenceA4Hz));
     // Gain uses per-play volume; Basicwave ignores scale when superwave is off.
     SoLoud.instance.setWaveformScale(normal, 1);
     SoLoud.instance.setWaveformScale(accent, 1);

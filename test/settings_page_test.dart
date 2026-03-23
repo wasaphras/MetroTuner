@@ -22,6 +22,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('General'), findsOneWidget);
+    expect(find.text('Concert pitch'), findsOneWidget);
   });
 
   testWidgets('SettingsPage lays out at 360x640 portrait', (tester) async {

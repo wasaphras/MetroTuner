@@ -8,7 +8,7 @@ Store **screenshots** or short **screen recordings** here for the main [README](
 |------|-------------|
 | `tuner.png` | Tuner tab — pitch strip, readouts, **Start**. |
 | `metronome.png` | Metronome tab — tempo, time signature, **Metronome sound**, transport. |
-| `settings.png` | Settings → General — accent color, pitch strip side. |
+| `settings.png` | Settings → General — accent color, concert pitch (440/432 Hz), pitch strip side. |
 
 Use **PNG** or **WebP**. Keep file sizes reasonable for GitHub (compress if a capture is huge).
 

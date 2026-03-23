@@ -9,6 +9,7 @@ import 'package:metrotuner/core/audio/metronome_click_sound_settings.dart';
 import 'package:metrotuner/core/pitch/note_math.dart';
 import 'package:metrotuner/features/settings/metronome_click_sound_notifier.dart';
 import 'package:metrotuner/features/settings/metronome_waveform_preview.dart';
+import 'package:metrotuner/features/settings/reference_concert_pitch_notifier.dart';
 import 'package:metrotuner/ui/theme/metro_tuner_theme.dart';
 
 const List<String> _kPitchClassNames = <String>[
@@ -39,7 +40,7 @@ const List<String> kMetronomeWaveformLabels = <String>[
   'Fourier saw',
 ];
 
-/// Metronome click pitch, reference A4, timbre, and preview (settings).
+/// Metronome click pitch, timbre, effects, and preview (settings).
 class MetronomeClickSoundSection extends ConsumerWidget {
   /// Creates the metronome click section.
   const MetronomeClickSoundSection({
@@ -57,6 +58,9 @@ class MetronomeClickSoundSection extends ConsumerWidget {
     final t = context.mtTheme;
     final s = ref.watch(metronomeClickSoundProvider);
     final notifier = ref.read(metronomeClickSoundProvider.notifier);
+    final refHz = referenceA4HzFromConcert(
+      concert: ref.watch(referenceConcertPitchProvider),
+    );
     final beatMidi = s.clampedBeatMidi;
     final downMidi = s.clampedDownbeatMidi;
 
@@ -106,7 +110,7 @@ class MetronomeClickSoundSection extends ConsumerWidget {
           label: 'Beat',
           value:
               '${NoteMath.midiToChromaticLabel(s.clampedBeatMidi)} · '
-              '${s.normalHz.toStringAsFixed(1)} Hz',
+              '${s.normalHz(refHz).toStringAsFixed(1)} Hz',
           emphasize: false,
           midi: beatMidi,
           scheme: scheme,
@@ -118,7 +122,7 @@ class MetronomeClickSoundSection extends ConsumerWidget {
           label: 'Downbeat',
           value:
               '${NoteMath.midiToChromaticLabel(s.clampedDownbeatMidi)} · '
-              '${s.accentHz.toStringAsFixed(1)} Hz',
+              '${s.accentHz(refHz).toStringAsFixed(1)} Hz',
           emphasize: true,
           midi: downMidi,
           scheme: scheme,
@@ -193,8 +197,8 @@ class MetronomeClickSoundSection extends ConsumerWidget {
         MetronomeWaveformPreview(
           waveformIndex: s.effectiveWaveformIndex,
           clickDurationMs: s.clampedClickDurationMs,
-          beatHz: s.normalHz,
-          downbeatHz: s.accentHz,
+          beatHz: s.normalHz(refHz),
+          downbeatHz: s.accentHz(refHz),
           reverb: s.clampedReverb,
           echo: s.clampedEcho,
           colorScheme: scheme,
@@ -343,45 +347,6 @@ class MetronomeClickSoundSection extends ConsumerWidget {
             ),
           ),
         ],
-        SizedBox(height: t.space20),
-        Text(
-          'Reference A4',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: t.space4),
-        Text(
-          'Concert pitch (440 Hz) or 432 Hz for Hz readouts.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: scheme.onSurfaceVariant,
-          ),
-        ),
-        SizedBox(height: t.space8),
-        SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment<bool>(
-              value: true,
-              label: Text('440 Hz'),
-              tooltip: 'Concert A4',
-            ),
-            ButtonSegment<bool>(
-              value: false,
-              label: Text('432 Hz'),
-              tooltip: 'Alternate reference',
-            ),
-          ],
-          selected: <bool>{s.concertA4},
-          onSelectionChanged: (set) {
-            if (set.isEmpty) {
-              return;
-            }
-            final cur = ref.read(metronomeClickSoundProvider);
-            unawaited(
-              notifier.setSettings(cur.copyWith(concertA4: set.first)),
-            );
-          },
-        ),
         SizedBox(height: t.space16),
         Text(
           'Preview',
@@ -397,7 +362,13 @@ class MetronomeClickSoundSection extends ConsumerWidget {
                 key: const Key('metronome_click_preview_normal'),
                 onPressed: () {
                   final cur = ref.read(metronomeClickSoundProvider);
-                  AudioEngine.instance.applyClickSoundSettings(cur);
+                  final hz = referenceA4HzFromConcert(
+                    concert: ref.read(referenceConcertPitchProvider),
+                  );
+                  AudioEngine.instance.applyClickSoundSettings(
+                    cur,
+                    referenceA4Hz: hz,
+                  );
                   AudioEngine.instance.playMetronomeClick(accent: false);
                 },
                 icon: const Icon(Icons.music_note_outlined),
@@ -410,7 +381,13 @@ class MetronomeClickSoundSection extends ConsumerWidget {
                 key: const Key('metronome_click_preview_accent'),
                 onPressed: () {
                   final cur = ref.read(metronomeClickSoundProvider);
-                  AudioEngine.instance.applyClickSoundSettings(cur);
+                  final hz = referenceA4HzFromConcert(
+                    concert: ref.read(referenceConcertPitchProvider),
+                  );
+                  AudioEngine.instance.applyClickSoundSettings(
+                    cur,
+                    referenceA4Hz: hz,
+                  );
                   AudioEngine.instance.playMetronomeClick(accent: true);
                 },
                 icon: const Icon(Icons.looks_one_outlined),

@@ -18,7 +18,6 @@ void main() {
       final s = metronomeClickSoundSettingsFromPrefs();
       expect(s.beatMidi, kMetronomeClickDefaultBeatMidi);
       expect(s.downbeatMidi, kMetronomeClickDefaultDownbeatMidi);
-      expect(s.concertA4, true);
       expect(s.waveformIndex, 3);
       expect(s.preset, MetronomeClickPreset.classic);
       expect(s.clickDurationMs, 16);
@@ -64,21 +63,24 @@ void main() {
     test('maps base and offset to beat and downbeat', () {
       final s = metronomeClickSoundSettingsFromLegacyPrefs(
         baseMidi: 69,
-        a4Hz: 440,
         accentOffsetSemitones: -12,
       );
       expect(s.beatMidi, 69);
       expect(s.downbeatMidi, 57);
-      expect(s.concertA4, true);
+    });
+  });
+
+  group('inferConcertA4FromLegacyA4Hz', () {
+    test('null defaults to concert', () {
+      expect(inferConcertA4FromLegacyA4Hz(null), isTrue);
     });
 
-    test('maps A4 toward 432', () {
-      final s = metronomeClickSoundSettingsFromLegacyPrefs(
-        baseMidi: 69,
-        a4Hz: 432,
-        accentOffsetSemitones: -12,
-      );
-      expect(s.concertA4, false);
+    test('440 maps to concert', () {
+      expect(inferConcertA4FromLegacyA4Hz(440), isTrue);
+    });
+
+    test('432 maps to alternate', () {
+      expect(inferConcertA4FromLegacyA4Hz(432), isFalse);
     });
   });
 
@@ -87,7 +89,6 @@ void main() {
       const s = MetronomeClickSoundSettings(
         beatMidi: kMetronomeClickDefaultBeatMidi,
         downbeatMidi: kMetronomeClickDefaultDownbeatMidi,
-        concertA4: true,
         waveformIndex: 3,
         preset: MetronomeClickPreset.custom,
         clickDurationMs: 16,
@@ -101,7 +102,6 @@ void main() {
       const s = MetronomeClickSoundSettings(
         beatMidi: kMetronomeClickDefaultBeatMidi,
         downbeatMidi: kMetronomeClickDefaultDownbeatMidi,
-        concertA4: true,
         waveformIndex: 0,
         preset: MetronomeClickPreset.bell,
         clickDurationMs: 16,
@@ -117,22 +117,20 @@ void main() {
       const s = MetronomeClickSoundSettings(
         beatMidi: 69,
         downbeatMidi: 57,
-        concertA4: true,
         waveformIndex: 3,
         preset: MetronomeClickPreset.classic,
         clickDurationMs: 16,
         reverb: 0,
         echo: 0,
       );
-      expect(s.normalHz, closeTo(440, 0.1));
-      expect(s.accentHz, closeTo(220, 0.1));
+      expect(s.normalHz(440), closeTo(440, 0.1));
+      expect(s.accentHz(440), closeTo(220, 0.1));
     });
 
     test('clamped downbeat MIDI respects range', () {
       const s = MetronomeClickSoundSettings(
         beatMidi: 48,
         downbeatMidi: 40,
-        concertA4: true,
         waveformIndex: 3,
         preset: MetronomeClickPreset.classic,
         clickDurationMs: 16,

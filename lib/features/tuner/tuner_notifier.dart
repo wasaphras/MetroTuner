@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:metrotuner/core/audio/metronome_click_sound_settings.dart';
 import 'package:metrotuner/core/pitch/pitch_types.dart';
 import 'package:metrotuner/core/pitch/tuner_audio_controller.dart';
+import 'package:metrotuner/features/settings/reference_concert_pitch_notifier.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// UI state for the chromatic tuner (mic transport + latest pitch estimate).
@@ -66,10 +68,22 @@ class TunerNotifier extends Notifier<TunerState> {
 
   @override
   TunerState build() {
-    _controller = TunerAudioController();
-    ref.onDispose(() {
-      unawaited(_tearDown());
-    });
+    _controller = TunerAudioController()
+      ..setReferenceA4Hz(
+        referenceA4HzFromConcert(
+          concert: ref.read(referenceConcertPitchProvider),
+        ),
+      );
+    ref
+      ..listen(referenceConcertPitchProvider, (previous, next) {
+        if (previous == next) {
+          return;
+        }
+        _controller?.setReferenceA4Hz(referenceA4HzFromConcert(concert: next));
+      })
+      ..onDispose(() {
+        unawaited(_tearDown());
+      });
     return TunerState.initial();
   }
 
@@ -93,6 +107,11 @@ class TunerNotifier extends Notifier<TunerState> {
       permissionDenied: false,
       startFailed: false,
       clearPitch: true,
+    );
+    c.setReferenceA4Hz(
+      referenceA4HzFromConcert(
+        concert: ref.read(referenceConcertPitchProvider),
+      ),
     );
     final ok = await c.start();
     if (!ok) {

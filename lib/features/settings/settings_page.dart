@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:metrotuner/features/settings/accent_settings.dart';
+import 'package:metrotuner/features/settings/concert_pitch_section.dart';
 import 'package:metrotuner/features/settings/tuner_strip_edge_settings.dart';
 import 'package:metrotuner/ui/layout/adaptive_breakpoints.dart';
 import 'package:metrotuner/ui/layout/phone_layout.dart';
@@ -82,7 +83,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 SizedBox(height: m.scale(t.space8)),
                 Text(
-                  'Theme and tuner layout.',
+                  'Theme, tuning reference, and tuner layout.',
                   style: tt.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontSize: bodyFs,
@@ -91,6 +92,8 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 SizedBox(height: sectionGap),
                 AccentColorSection(layout: m),
+                SizedBox(height: sectionGap),
+                const ConcertPitchSection(),
                 SizedBox(height: sectionGap),
                 const TunerStripEdgePicker(),
                 SizedBox(height: sectionGap),

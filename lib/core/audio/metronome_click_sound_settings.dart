@@ -6,7 +6,13 @@ import 'package:metrotuner/core/pitch/note_math.dart';
 const String kMetronomeClickBeatMidiPrefsKey = 'metronome_click_beat_midi';
 const String kMetronomeClickDownbeatMidiPrefsKey =
     'metronome_click_downbeat_midi';
+
+/// Legacy key: concert A4 was stored with metronome prefs; migrated to
+/// [kGeneralConcertA4PrefsKey] on load.
 const String kMetronomeClickConcertA4PrefsKey = 'metronome_click_concert_a4';
+
+/// General settings: `true` = A4 440 Hz, `false` = 432 Hz (tuner + clicks).
+const String kGeneralConcertA4PrefsKey = 'general_concert_a4';
 
 /// Legacy keys (migration only).
 const String kMetronomeClickBaseMidiPrefsKey = 'metronome_click_base_midi';
@@ -33,6 +39,21 @@ const double kMetronomeReferenceA4ConcertHz = 440;
 /// Reference A4 for alternate tuning (Hz).
 const double kMetronomeReferenceA4AlternateHz = 432;
 
+/// Maps concert toggle to reference A4 in Hz (tuner + metronome clicks).
+double referenceA4HzFromConcert({required bool concert}) => concert
+    ? kMetronomeReferenceA4ConcertHz
+    : kMetronomeReferenceA4AlternateHz;
+
+/// Infer concert vs 432 from legacy stored Hz (closer pitch wins).
+bool inferConcertA4FromLegacyA4Hz(double? a4Hz) {
+  if (a4Hz == null) {
+    return true;
+  }
+  final dist440 = (a4Hz - kMetronomeReferenceA4ConcertHz).abs();
+  final dist432 = (a4Hz - kMetronomeReferenceA4AlternateHz).abs();
+  return dist440 <= dist432;
+}
+
 /// Click length (ms) slider range.
 const double kMetronomeClickDurationMsMin = 3;
 const double kMetronomeClickDurationMsMax = 80;
@@ -45,15 +66,14 @@ const int kMetronomeClickDefaultDownbeatMidi = 69;
 
 /// User-tunable metronome click synthesis (equal temperament).
 ///
-/// Beat and downbeat use independent MIDI notes; reference is concert A4 (440)
-/// or alternate A4 (432 Hz).
+/// Beat and downbeat use independent MIDI notes; reference A4 (440 vs 432 Hz)
+/// is global ([kGeneralConcertA4PrefsKey]) and passed into Hz helpers at runtime.
 @immutable
 class MetronomeClickSoundSettings {
   /// Creates settings.
   const MetronomeClickSoundSettings({
     required this.beatMidi,
     required this.downbeatMidi,
-    required this.concertA4,
     required this.waveformIndex,
     required this.preset,
     required this.clickDurationMs,
@@ -66,7 +86,6 @@ class MetronomeClickSoundSettings {
       const MetronomeClickSoundSettings(
         beatMidi: kMetronomeClickDefaultBeatMidi,
         downbeatMidi: kMetronomeClickDefaultDownbeatMidi,
-        concertA4: true,
         waveformIndex: 3,
         preset: MetronomeClickPreset.classic,
         clickDurationMs: 16,
@@ -76,9 +95,6 @@ class MetronomeClickSoundSettings {
 
   final int beatMidi;
   final int downbeatMidi;
-
-  /// `true` = A4 440 Hz (concert); `false` = A4 432 Hz.
-  final bool concertA4;
 
   /// Index into `WaveForm` when [preset] is [MetronomeClickPreset.custom].
   final int waveformIndex;
@@ -103,10 +119,6 @@ class MetronomeClickSoundSettings {
     return preset.waveformIndex;
   }
 
-  /// Reference A4 in Hz for [NoteMath.midiToHz].
-  double get referenceA4Hz =>
-      concertA4 ? kMetronomeReferenceA4ConcertHz : kMetronomeReferenceA4AlternateHz;
-
   /// Clamped MIDI for non-accent beats.
   int get clampedBeatMidi => beatMidi.clamp(
     kMetronomeClickMidiMin,
@@ -120,14 +132,14 @@ class MetronomeClickSoundSettings {
   );
 
   /// Fundamental Hz for a normal (non-accent) click.
-  double get normalHz =>
+  double normalHz(double referenceA4Hz) =>
       NoteMath.midiToHz(clampedBeatMidi.toDouble(), a4Hz: referenceA4Hz);
 
   /// MIDI used for the accent (downbeat).
   int get clampedAccentMidi => clampedDownbeatMidi;
 
   /// Fundamental Hz for an accent (downbeat) click.
-  double get accentHz =>
+  double accentHz(double referenceA4Hz) =>
       NoteMath.midiToHz(clampedDownbeatMidi.toDouble(), a4Hz: referenceA4Hz);
 
   /// Clamped click duration for playback.
@@ -143,7 +155,6 @@ class MetronomeClickSoundSettings {
   MetronomeClickSoundSettings copyWith({
     int? beatMidi,
     int? downbeatMidi,
-    bool? concertA4,
     int? waveformIndex,
     MetronomeClickPreset? preset,
     double? clickDurationMs,
@@ -153,7 +164,6 @@ class MetronomeClickSoundSettings {
     return MetronomeClickSoundSettings(
       beatMidi: beatMidi ?? this.beatMidi,
       downbeatMidi: downbeatMidi ?? this.downbeatMidi,
-      concertA4: concertA4 ?? this.concertA4,
       waveformIndex: waveformIndex ?? this.waveformIndex,
       preset: preset ?? this.preset,
       clickDurationMs: clickDurationMs ?? this.clickDurationMs,
@@ -167,7 +177,6 @@ class MetronomeClickSoundSettings {
     return other is MetronomeClickSoundSettings &&
         other.beatMidi == beatMidi &&
         other.downbeatMidi == downbeatMidi &&
-        other.concertA4 == concertA4 &&
         other.waveformIndex == waveformIndex &&
         other.preset == preset &&
         other.clickDurationMs == clickDurationMs &&
@@ -179,7 +188,6 @@ class MetronomeClickSoundSettings {
   int get hashCode => Object.hash(
     beatMidi,
     downbeatMidi,
-    concertA4,
     waveformIndex,
     preset,
     clickDurationMs,
@@ -195,7 +203,6 @@ const int kMetronomeClickWaveformIndexMax = 8;
 MetronomeClickSoundSettings metronomeClickSoundSettingsFromPrefs({
   int? beatMidi,
   int? downbeatMidi,
-  bool? concertA4,
   int? waveformIndex,
   int? presetIndex,
   double? clickDurationMs,
@@ -225,7 +232,6 @@ MetronomeClickSoundSettings metronomeClickSoundSettingsFromPrefs({
   return MetronomeClickSoundSettings(
     beatMidi: b,
     downbeatMidi: db,
-    concertA4: concertA4 ?? d.concertA4,
     waveformIndex: validWi,
     preset: preset,
     clickDurationMs: dur,
@@ -234,10 +240,9 @@ MetronomeClickSoundSettings metronomeClickSoundSettingsFromPrefs({
   );
 }
 
-/// Builds settings from legacy prefs (base MIDI, A4 Hz slider, accent offset).
+/// Builds settings from legacy prefs (base MIDI, accent offset only).
 MetronomeClickSoundSettings metronomeClickSoundSettingsFromLegacyPrefs({
   required int? baseMidi,
-  required double? a4Hz,
   required int? accentOffsetSemitones,
   int? waveformIndex,
   int? presetIndex,
@@ -253,17 +258,9 @@ MetronomeClickSoundSettings metronomeClickSoundSettingsFromLegacyPrefs({
   final rawDown = base + off;
   final down = rawDown.clamp(kMetronomeClickMidiMin, kMetronomeClickMidiMax);
 
-  var concert = true;
-  if (a4Hz != null) {
-    final dist440 = (a4Hz - kMetronomeReferenceA4ConcertHz).abs();
-    final dist432 = (a4Hz - kMetronomeReferenceA4AlternateHz).abs();
-    concert = dist440 <= dist432;
-  }
-
   return metronomeClickSoundSettingsFromPrefs(
     beatMidi: base,
     downbeatMidi: down,
-    concertA4: concert,
     waveformIndex: waveformIndex,
     presetIndex: presetIndex,
     clickDurationMs: clickDurationMs,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:metrotuner/core/pitch/note_math.dart';
 import 'package:metrotuner/core/pitch/pitch_detector.dart';
 import 'package:metrotuner/core/pitch/pitch_types.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -9,19 +10,26 @@ import 'package:record/record.dart';
 
 /// Top-level for [Isolate.run] (same library as [PitchDetector]).
 PitchResult? _analyzeFrameInIsolate(_AnalyzeFrameMessage msg) {
-  return PitchDetector.analyzeFrame(msg.samples, msg.sampleRate);
+  return PitchDetector.analyzeFrame(
+    msg.samples,
+    msg.sampleRate,
+    a4Hz: msg.a4Hz,
+  );
 }
 
 /// Message for isolate pitch analysis.
 class _AnalyzeFrameMessage {
-  /// Creates a message with float PCM and sample rate.
-  const _AnalyzeFrameMessage(this.samples, this.sampleRate);
+  /// Creates a message with float PCM, sample rate, and reference A4.
+  const _AnalyzeFrameMessage(this.samples, this.sampleRate, this.a4Hz);
 
   /// Mono normalized float samples.
   final Float32List samples;
 
   /// Sample rate in Hz.
   final int sampleRate;
+
+  /// Reference A4 in Hz for note / cents mapping.
+  final double a4Hz;
 }
 
 /// Captures mono PCM from the mic, runs [PitchDetector] per frame on a worker
@@ -53,8 +61,17 @@ class TunerAudioController {
 
   int _lastEmitMs = 0;
 
+  double _referenceA4Hz = NoteMath.defaultA4Hz;
+
   /// Whether a recording session is active.
   bool get isRunning => _running;
+
+  /// Updates equal-temperament reference for note labels and cents (live).
+  void setReferenceA4Hz(double hz) {
+    if (hz > 0 && hz.isFinite) {
+      _referenceA4Hz = hz;
+    }
+  }
 
   /// Requests mic permission and starts streaming analysis.
   ///
@@ -110,7 +127,7 @@ class TunerAudioController {
   }
 
   void _enqueueFrame(Float32List frame) {
-    _pendingFrame = _AnalyzeFrameMessage(frame, sampleRate);
+    _pendingFrame = _AnalyzeFrameMessage(frame, sampleRate, _referenceA4Hz);
     unawaited(_drainIsolateQueue());
   }
 
