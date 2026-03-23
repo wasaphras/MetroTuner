@@ -1,49 +1,61 @@
 # MetroTuner
 
-Hey — this is a **hobby** Flutter app I made: a **metronome** + **chromatic tuner** for Android and iOS. I wanted something that actually respects privacy (no analytics, no Play-services baggage, no network permission in the release APK) and only uses the mic when you tap **Start** on the tuner. If that sounds useful, cool; if not, also fine.
+Privacy-first **metronome** and **chromatic tuner** for Android and iOS (Flutter). No analytics, no crash SDKs, and the release APK does not request network permission. The microphone is used **only** when you tap **Start** on the tuner.
 
-- **Code:** [github.com/wasaphras/MetroTuner](https://github.com/wasaphras/MetroTuner)
-- **License:** [MIT](LICENSE) — do what you want, just don’t blame me if your cat eats the APK
-- **Want to hack on it?** [CONTRIBUTING.md](CONTRIBUTING.md)
+| | |
+|--|--|
+| **Repository** | [github.com/wasaphras/MetroTuner](https://github.com/wasaphras/MetroTuner) |
+| **License** | [MIT](LICENSE) |
+| **Contributing** | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
-**Phones** are the real target (Android + iOS in the repo). **Releases** = signed **APKs** on GitHub. iOS is there for whenever someone has a Mac handy. **Web** folder = “I left the door unlocked if you wanna peek,” not a supported product.
-
-**Features in a nutshell**
-
-- Tuner: vertical pitch strip; stick it on the **left or right** in Settings (saved on your phone).
-- Pick an **accent color** (presets or DIY RGB) — also local only.
-- Metronome: BPM, meters, tap tempo, plus a whole **Metronome sound** screen (pitches, A4 vs 432 crowd, waveforms, echo-y stuff) from the Metronome tab.
+**Phones** are the primary target (Android + iOS). **Releases** ship signed **APKs** on GitHub. The **web** folder exists for experiments; it is not a supported product surface.
 
 ## Screenshots
 
-Toss pictures in [docs/screenshots/](docs/screenshots/) when you have them. No screenshot police.
+Captured from the Android build (1080×2400). Paths are relative to the repo root so they render on GitHub.
+
+| Tuner | Metronome |
+|:---:|:---:|
+| ![Tuner: pitch strip, readouts, Start](docs/screenshots/tuner.png) | ![Metronome: tempo, time signature, transport](docs/screenshots/metronome.png) |
+
+**Settings** — accent color presets, custom color, and pitch strip on the left or right (saved locally only).
+
+![Settings: General — accent color and pitch strip](docs/screenshots/settings.png)
+
+More assets or recordings can live under [docs/screenshots/](docs/screenshots/) (see that folder’s README).
+
+## Features
+
+- **Tuner:** Vertical pitch strip; place it on the **left** or **right** in Settings.
+- **Theme:** **Accent color** from presets or a custom RGB value; stored on device only.
+- **Metronome:** BPM, meters, tap tempo, and a **Metronome sound** screen (pitches, A4 vs 432 Hz, waveforms, echo) from the Metronome tab.
 
 ## Privacy
 
-- Release APK isn’t trying to talk to the internet — you can double-check with `aapt` ([docs/build_and_verify.md](docs/build_and_verify.md)).
-- Mic = **only** after you hit **Start** on the tuner; background the app and it stops.
-- No accounts, no cloud, no ads, no “please send us your soul” SDKs.
+- Release APK is built without a general internet permission — verify with `aapt` ([docs/build_and_verify.md](docs/build_and_verify.md)).
+- Mic capture starts **only** after **Start** on the tuner; backgrounding the app stops it.
+- No accounts, cloud sync, ads, or third-party analytics/crash SDKs.
 
-### If you find something scary
+### Reporting security or privacy issues
 
-Security/privacy bug that could hurt people? Please **don’t** drop it in a public issue first. Use GitHub **Security → Report a vulnerability** if it’s there, or DM the maintainer through GitHub. Normal broken stuff → [Issues](https://github.com/wasaphras/MetroTuner/issues) is perfect.
+Please do **not** post exploitable details in a public issue first. Use GitHub **Security → Report a vulnerability** when available, or contact the maintainer privately. Ordinary bugs and feature ideas belong in [Issues](https://github.com/wasaphras/MetroTuner/issues).
 
 ### Android permission
 
 | Permission | Why |
 |------------|-----|
-| `RECORD_AUDIO` | Tuner. Only after you start and maybe allow the OS prompt. |
+| `RECORD_AUDIO` | Tuner only, after you start and grant the OS prompt if asked. |
 
-Plus the usual “no cleartext, tight network config, backup off” Android hygiene. No Firebase circus.
+Hardening elsewhere follows the usual pattern: no cleartext traffic, tight network security config, backups off. No Firebase or similar stacks.
 
-## What you need
+## Requirements
 
 - [Flutter](https://docs.flutter.dev/get-started/install) (stable is fine)
-- Android SDK and/or Xcode if you’re building for real devices
+- Android SDK and/or Xcode for device or emulator builds
 
-App stays **portrait**. Life’s too short for landscape metronomes (for now).
+The app is **portrait-only** for now.
 
-**Arch / CachyOS rant:** distro Flutter under `/usr/lib/flutter` is often owned by root and Gradle gets sad. Easiest fix: clone Flutter into `~`, put `~/flutter/bin` on `PATH`:
+**Arch / CachyOS:** A distro Flutter under `/usr/lib/flutter` is often root-owned and can break Gradle. Prefer a user-owned SDK, for example:
 
 ```bash
 cd ~
@@ -53,9 +65,9 @@ source ~/.zshrc
 flutter doctor
 ```
 
-Then `which flutter` should be your home copy, not `/usr/bin/whatever`.
+Confirm `which flutter` points at your home copy, not `/usr/bin/...`.
 
-## Build & run
+## Build and run
 
 ```bash
 git clone git@github.com:wasaphras/MetroTuner.git
@@ -66,26 +78,26 @@ flutter test
 flutter run
 ```
 
-| Target | Rough idea |
-|--------|------------|
+| Target | Notes |
+|--------|--------|
 | Android emulator | `flutter emulators --launch …` then `flutter run` |
-| Real Android | USB + dev mode → `flutter run` (best for mic feel) |
-| iOS | Simulator/device + `flutter run -d …` |
+| Physical Android | USB debugging → `flutter run` (best for mic behavior) |
+| iOS | Simulator or device → `flutter run -d …` |
 
-More detail: [docs/testing.md](docs/testing.md).
+Further detail: [docs/testing.md](docs/testing.md).
 
-**Ship an APK:** [docs/build_and_verify.md](docs/build_and_verify.md). Tag `v1.2.3` matching `pubspec.yaml` → CI spits out `metrotuner-v1.2.3.apk`. First time? There’s a [checklist](docs/build_and_verify.md#phase-9-maintainer-checklist) for keys & secrets.
+**Shipping an APK:** [docs/build_and_verify.md](docs/build_and_verify.md). Tag `v1.2.3` matching `pubspec.yaml` so CI produces `metrotuner-v1.2.3.apk`. First-time release: use the [maintainer checklist](docs/build_and_verify.md#phase-9-maintainer-checklist) for keys and secrets.
 
-### Coverage (when you touch the mathy bits)
+### Coverage (core audio / pitch math)
 
 ```bash
 flutter test --coverage
 bash tool/verify_core_coverage.sh
 ```
 
-Optional full local sweep (analyze, tests, and the core coverage gate if `coverage/lcov.info` exists): `bash tool/run_code_hygiene.sh`.
+Optional local sweep (analyze, tests, core coverage when `coverage/lcov.info` exists): `bash tool/run_code_hygiene.sh`.
 
-Pitch / scheduler / note math needs to stay ≥80% on the scoped files — [CONTRIBUTING.md](CONTRIBUTING.md).
+Pitch, scheduler, and note math stay ≥80% on the scoped files — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Sanity-check a release APK
 
@@ -93,7 +105,7 @@ Pitch / scheduler / note math needs to stay ≥80% on the scoped files — [CONT
 aapt dump permissions build/app/outputs/flutter-apk/app-release.apk
 ```
 
-You want `RECORD_AUDIO`, not surprise `INTERNET`.
+Expect `RECORD_AUDIO`, not unexpected `INTERNET`.
 
 ```bash
 apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
@@ -105,21 +117,21 @@ apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 
 ## Icons
 
-Changed `assets/icon/app_icon.png`?
+After changing `assets/icon/app_icon.png`:
 
 ```bash
 dart run flutter_launcher_icons
 ```
 
-## Docs index
+## Documentation
 
-| | |
-|--|--|
-| What exists + random notes | [plan.md](plan.md) |
-| How audio & YIN work | [docs/architecture.md](docs/architecture.md) |
-| Emulators, integration tests | [docs/testing.md](docs/testing.md) |
-| Keys, APK, GitHub Releases | [docs/build_and_verify.md](docs/build_and_verify.md) |
+| Topic | Doc |
+|--------|-----|
+| Roadmap and notes | [plan.md](plan.md) |
+| Audio and YIN pitch detection | [docs/architecture.md](docs/architecture.md) |
+| Emulators and integration tests | [docs/testing.md](docs/testing.md) |
+| Signing, APK, GitHub Releases | [docs/build_and_verify.md](docs/build_and_verify.md) |
 
 ## Contributing
 
-[CONTRIBUTING.md](CONTRIBUTING.md) — the short version: be nice, run the tests, don’t commit your keystore. ✌️
+See [CONTRIBUTING.md](CONTRIBUTING.md): be constructive, run tests, and never commit keystores or secrets.
