@@ -78,7 +78,8 @@ Deep dive on audio: [docs/architecture.md](docs/architecture.md).
 
 ## Maybe someday
 
-Alternate tunings, fancy polyrhythm UI, tuner oscilloscope, whatever — **zero promises**.
+- **Metronome in the background** — keep ticking when the app is not in the foreground, with a **persistent notification** (or OS-appropriate media controls) so playback can be **stopped from there** without opening MetroTuner. Expect Android foreground-service / notification-channel work and iOS background-audio rules; still **zero promises** on timeline.
+- Alternate tunings, fancy polyrhythm UI, tuner oscilloscope, whatever — same **zero promises**.
 
 ---
 
