@@ -22,6 +22,7 @@
    - `dart fix --apply` if you touched Dart
    - `flutter analyze` — **zero** problems please
    - `flutter test`
+   - Optional one-shot: `bash tool/run_code_hygiene.sh` (runs analyze + tests; if `coverage/lcov.info` exists, also checks core logic ≥ 80%)
    - Touched **pitch math, BPM scheduling, or note mapping**? Also `flutter test --coverage` + `bash tool/verify_core_coverage.sh`
 
 Integration tests need a device/emulator: [docs/testing.md](docs/testing.md).

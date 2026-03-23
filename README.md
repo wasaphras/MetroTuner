@@ -83,6 +83,8 @@ flutter test --coverage
 bash tool/verify_core_coverage.sh
 ```
 
+Optional full local sweep (analyze, tests, and the core coverage gate if `coverage/lcov.info` exists): `bash tool/run_code_hygiene.sh`.
+
 Pitch / scheduler / note math needs to stay ≥80% on the scoped files — [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Sanity-check a release APK

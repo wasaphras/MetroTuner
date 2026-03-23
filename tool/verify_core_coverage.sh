@@ -38,6 +38,6 @@ done
 pct=$((100 * total_lh / total_lf))
 echo "Core logic line coverage: $total_lh / $total_lf ($pct%)"
 if (( total_lh * 100 < 80 * total_lf )); then
-  echo "FAIL: expected >= 80% on core logic (see plan.md Phase 7)" >&2
+  echo "FAIL: expected >= 80% on core logic (see CONTRIBUTING.md)" >&2
   exit 1
 fi

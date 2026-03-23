@@ -110,6 +110,16 @@ flutter test integration_test/ -d <device_id>
 
 The integration harness exercises metronome start/stop and tuner start/stop (with a fake tuner notifier).
 
+### Optional: duplicate code scan (local only)
+
+CI does not run duplicate detection. The old open-source `dart_code_metrics` package is discontinued; [DCM](https://dcm.dev/) is a separate commercial CLI if you want Dart-aware checks.
+
+For a quick text-based duplicate report, use [jscpd](https://github.com/kucherenko/jscpd) via Node and keep any wrapper script under `private/` (that directory is gitignored). Example (expect false positives on repetitive widget trees; raise `--min-lines` if needed):
+
+```bash
+npx --yes jscpd lib test --min-lines 8 --reporters console
+```
+
 ### Release APK permissions audit
 
 After `flutter build apk --release`, confirm only expected permissions are declared:
