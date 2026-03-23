@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing tag to build and publish (e.g. v1.0.0). Use after adding signing secrets or to retry a failed release.'
+        required: true
+        type: string
 
 jobs:
   android-apk:
@@ -16,11 +22,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Verify tag matches pubspec version
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -euo pipefail
-          REF="${GITHUB_REF_NAME}"
+          REF="$TAG"
           if [[ ! "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Tag must be vMAJOR.MINOR.PATCH (e.g. v1.0.0), got: $REF" >&2
             exit 1
@@ -85,13 +104,25 @@ jobs:
             build/app/outputs/flutter-apk/app-release.apk
 
       - name: Prepare versioned APK for release
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk \
-            "metrotuner-${GITHUB_REF_NAME}.apk"
+          set -euo pipefail
+          OUT="metrotuner-${TAG}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$OUT"
+          test -f "$OUT"
+          ls -la "$OUT"
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2.6.1
         with:
-          files: metrotuner-${{ github.ref_name }}.apk
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: MetroTuner ${{ steps.meta.outputs.tag }}
+          body: |
+            Download **metrotuner-${{ steps.meta.outputs.tag }}.apk** for sideloading (e.g. Obtanium). The “Source code” zip/tar.gz entries are added by GitHub automatically and are not the app binary.
+          files: metrotuner-${{ steps.meta.outputs.tag }}.apk
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
           generate_release_notes: true
           make_latest: true

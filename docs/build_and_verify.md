@@ -130,7 +130,11 @@ Upload the `.ipa` as a **manual** release asset if you build on a Mac. CI curren
 
 ## GitHub Actions — release APK on tags
 
-Pushing a semver tag `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`) triggers [.github/workflows/release.yml](../.github/workflows/release.yml). The tag **must match** the version **before** `+` in [pubspec.yaml](../pubspec.yaml) (e.g. tag `v1.0.0` requires `version: 1.0.0+…`). The workflow builds a signed APK named `metrotuner-<tag>.apk` and creates/updates the GitHub Release.
+Pushing a semver tag `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`) triggers [.github/workflows/release.yml](../.github/workflows/release.yml). The tag **must match** the version **before** `+` in [pubspec.yaml](../pubspec.yaml) (e.g. tag `v1.0.0` requires `version: 1.0.0+…`). The workflow builds a signed APK named `metrotuner-<tag>.apk` and **creates or updates** the GitHub **Release** for that tag (not only a lightweight tag).
+
+**Tags vs Releases:** GitHub always offers **Source code** (zip/tar.gz) on tag pages; those are **not** the app. If the Release workflow fails (usually missing signing secrets), you will see a **tag** but **no** `.apk` under **Releases**. Tools such as **Obtanium** need the **`metrotuner-v*.apk`** asset on a successful Release.
+
+**Retry without a new tag:** After adding the secrets below, open **Actions → Release → Run workflow**, enter the existing tag (e.g. `v1.0.0`), and run. You can also **Re-run failed jobs** on the run that was triggered by the tag push.
 
 Required **repository secrets** (names only):
 
@@ -222,7 +226,7 @@ git tag -a v1.0.0 -m "MetroTuner v1.0.0"
 git push origin v1.0.0
 ```
 
-The **Release** workflow runs, uploads `app-release.apk`, and prints the certificate in the Actions log — use that **SHA-256** line in the README.
+The **Release** workflow runs, uploads `metrotuner-v1.0.0.apk` (for that tag), and prints the certificate in the Actions log — use that **SHA-256** line in the README.
 
 ### F. iOS IPA (optional)
 
