@@ -60,7 +60,6 @@ class TunerStripEdgePicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
     final t = context.mtTheme;
     final edge = ref.watch(tunerStripEdgeProvider);
     return Column(
@@ -95,14 +94,6 @@ class TunerStripEdgePicker extends ConsumerWidget {
               ref.read(tunerStripEdgeProvider.notifier).setEdge(s.first),
             );
           },
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return scheme.onPrimary;
-              }
-              return scheme.onSurface;
-            }),
-          ),
         ),
       ],
     );
