@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    One pivot: tuner dial arc (pitch) + pendulum needle (time).
+    Arc first, needle on top. Geometry kept inside ~66% safe circle.
+  -->
+  <path
+    d="M 308 652 Q 512 382 716 652"
+    fill="none"
+    stroke="#4AE8D4"
+    stroke-width="62"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+  <g fill="#F5F7FB">
+    <!-- Stem: strong width for 24px legibility -->
+    <rect x="470" y="308" width="84" height="344" rx="42" ry="42"/>
+    <!-- Bob: slightly heavier bottom for pendulum read -->
+    <ellipse cx="512" cy="252" rx="70" ry="86"/>
+  </g>
+</svg>

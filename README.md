@@ -117,7 +117,12 @@ apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 
 ## Icons
 
-After changing `assets/icon/app_icon.png`:
+Sources:
+
+- `assets/icon/app_icon.png` — 1024×1024 opaque composite (iOS + Android fallback).
+- `assets/icon/app_icon_foreground.png` — transparent foreground for Android adaptive icons.
+- `assets/icon/app_icon_background.png` — background layer for Android adaptive icons.
+- Editable vectors: `tools/app_icon/*.svg` — re-export PNGs with `rsvg-convert -w 1024 -h 1024 <file>.svg -o assets/icon/<name>.png`, then run:
 
 ```bash
 dart run flutter_launcher_icons
