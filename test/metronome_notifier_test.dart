@@ -76,4 +76,88 @@ void main() {
       5,
     );
   });
+
+  test('MetronomeNotifier clamps session target to min/max', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    container.read(metronomeProvider.notifier).setSessionTargetDuration(
+      const Duration(milliseconds: 100),
+    );
+    expect(
+      container.read(metronomeProvider).sessionTargetDuration,
+      kMetronomeSessionTargetMin,
+    );
+    container.read(metronomeProvider.notifier).setSessionTargetDuration(
+      const Duration(hours: 48),
+    );
+    expect(
+      container.read(metronomeProvider).sessionTargetDuration,
+      kMetronomeSessionTargetMax,
+    );
+  });
+
+  test('MetronomeNotifier auto-stops when session target elapses', () {
+    fakeAsync((async) {
+      final container = ProviderContainer();
+      try {
+        container.read(metronomeProvider.notifier)
+          ..setBpm(240)
+          ..setSessionTargetDuration(const Duration(seconds: 1))
+          ..start();
+        expect(container.read(metronomeProvider).isRunning, isTrue);
+        async.elapse(const Duration(milliseconds: 1100));
+        expect(container.read(metronomeProvider).isRunning, isFalse);
+        expect(
+          container.read(metronomeProvider).sessionTargetDuration,
+          const Duration(seconds: 1),
+        );
+      } finally {
+        container.dispose();
+      }
+    });
+  });
+
+  test('MetronomeNotifier stop cancels session end timer', () {
+    fakeAsync((async) {
+      final container = ProviderContainer();
+      try {
+        container.read(metronomeProvider.notifier)
+          ..setBpm(40)
+          ..setSessionTargetDuration(const Duration(minutes: 30))
+          ..start();
+        final gen = container.read(metronomeProvider).beatFlashGeneration;
+        container.read(metronomeProvider.notifier).stop();
+        async.elapse(const Duration(hours: 1));
+        expect(container.read(metronomeProvider).isRunning, isFalse);
+        expect(
+          container.read(metronomeProvider).beatFlashGeneration,
+          gen,
+        );
+        expect(
+          container.read(metronomeProvider).sessionTargetDuration,
+          const Duration(minutes: 30),
+        );
+      } finally {
+        container.dispose();
+      }
+    });
+  });
+
+  test('MetronomeNotifier clearSessionTarget while running drops auto-stop', () {
+    fakeAsync((async) {
+      final container = ProviderContainer();
+      try {
+        container.read(metronomeProvider.notifier)
+          ..setBpm(40)
+          ..setSessionTargetDuration(const Duration(minutes: 1))
+          ..start();
+        container.read(metronomeProvider.notifier).clearSessionTarget();
+        async.elapse(const Duration(minutes: 5));
+        expect(container.read(metronomeProvider).isRunning, isTrue);
+        container.read(metronomeProvider.notifier).stop();
+      } finally {
+        container.dispose();
+      }
+    });
+  });
 }

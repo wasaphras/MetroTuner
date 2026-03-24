@@ -42,6 +42,8 @@ void main() {
     expect(find.text('120'), findsOneWidget);
     expect(find.text('Start'), findsOneWidget);
     expect(find.text('Custom…'), findsOneWidget);
+    expect(find.text('Custom length…'), findsOneWidget);
+    expect(find.text('Session'), findsOneWidget);
     expect(find.text('Metronome sound'), findsOneWidget);
     expect(find.byTooltip('Settings'), findsOneWidget);
   });
@@ -162,6 +164,29 @@ void main() {
     );
     await tester.pump();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Session preset 10 min then Start shows remaining', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: MetronomePage(),
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('10 min'));
+    await tester.tap(find.text('10 min'));
+    await tester.pump();
+
+    await tester.ensureVisible(find.byTooltip('Start metronome'));
+    await tester.tap(find.byTooltip('Start metronome'));
+    await pumpUntilFound(tester, find.byTooltip('Stop metronome'));
+
+    expect(find.textContaining('Remaining'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Stop metronome'));
+    await tester.pump();
   });
 
   testWidgets('Opening Metronome sound stops transport', (tester) async {

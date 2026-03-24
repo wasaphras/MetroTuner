@@ -15,6 +15,10 @@ const double _kMetronomeSoundScrollHeightFraction = 0.92;
 ///
 /// Stops transport if the metronome was playing so click preview and beats do
 /// not overlap.
+///
+/// Timed session target ([MetronomeState.sessionTargetDuration]) is **not**
+/// cleared here — only [MetronomeNotifier.stop] runs. The next Start on the
+/// metronome tab begins a fresh run toward the same target.
 void openMetronomeSound(BuildContext context) {
   ProviderScope.containerOf(context).read(metronomeProvider.notifier).stop();
   unawaited(

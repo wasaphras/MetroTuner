@@ -10,6 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 const String kMeterBeatsPrefsKey = 'metronome_meter_beats';
 const String kMeterUnitPrefsKey = 'metronome_meter_unit';
 
+/// Minimum / maximum timed session length (wall clock).
+const Duration kMetronomeSessionTargetMin = Duration(seconds: 1);
+const Duration kMetronomeSessionTargetMax = Duration(hours: 24);
+
+const Object _kSessionTargetUnset = Object();
+
 /// State for the metronome (BPM, meter, transport, UI beat flash).
 class MetronomeState {
   /// Creates metronome state.
@@ -19,6 +25,7 @@ class MetronomeState {
     required this.isRunning,
     required this.sessionBeatIndex,
     required this.beatFlashGeneration,
+    this.sessionTargetDuration,
   });
 
   /// Initial defaults: 120 BPM, 4/4, stopped.
@@ -40,12 +47,16 @@ class MetronomeState {
   /// Increments on each audible beat so the UI can flash without relying on timers.
   final int beatFlashGeneration;
 
+  /// Optional wall-clock cap for the current practice session; null means no limit.
+  final Duration? sessionTargetDuration;
+
   MetronomeState copyWith({
     int? bpm,
     Meter? meter,
     bool? isRunning,
     int? sessionBeatIndex,
     int? beatFlashGeneration,
+    Object? sessionTargetDuration = _kSessionTargetUnset,
   }) {
     return MetronomeState(
       bpm: bpm ?? this.bpm,
@@ -53,6 +64,9 @@ class MetronomeState {
       isRunning: isRunning ?? this.isRunning,
       sessionBeatIndex: sessionBeatIndex ?? this.sessionBeatIndex,
       beatFlashGeneration: beatFlashGeneration ?? this.beatFlashGeneration,
+      sessionTargetDuration: identical(sessionTargetDuration, _kSessionTargetUnset)
+          ? this.sessionTargetDuration
+          : sessionTargetDuration as Duration?,
     );
   }
 }
@@ -102,12 +116,21 @@ class TapTempoBuffer {
 }
 
 /// Riverpod controller: start/stop, BPM, meter, tap tempo, and monotonic scheduling.
+///
+/// **Timed sessions:** `sessionTargetDuration` is wall-clock time from each `start`;
+/// BPM/meter changes do not extend or shorten the deadline. Auto-stop uses the same
+/// `stop` path as the user (beat + session timers cancelled).
+///
+/// **Target survives stop:** Opening the metronome sound screen (`openMetronomeSound`),
+/// app pause/hide, or manual Stop ends transport but keeps the chosen target so the
+/// next Start is still a timed session until cleared.
 class MetronomeNotifier extends Notifier<MetronomeState> {
   final Stopwatch _stopwatch = Stopwatch();
   final TapTempoBuffer _tapTempo = TapTempoBuffer();
   int _scheduleGeneration = 0;
   int _beatIndex = 0;
   Timer? _beatTimer;
+  Timer? _sessionEndTimer;
 
   @override
   MetronomeState build() => MetronomeState.initial();
@@ -152,6 +175,47 @@ class MetronomeNotifier extends Notifier<MetronomeState> {
 
   void decrementBpm() => setBpm(state.bpm - 1);
 
+  /// Sets or clears the timed session cap (clamped to [kMetronomeSessionTargetMin],
+  /// [kMetronomeSessionTargetMax]). Reschedules the session end timer if running.
+  void setSessionTargetDuration(Duration? value) {
+    final clamped = _clampSessionTarget(value);
+    state = state.copyWith(sessionTargetDuration: clamped);
+    if (state.isRunning) {
+      _scheduleSessionEndTimer();
+    }
+  }
+
+  /// Clears the session target (open-ended practice).
+  void clearSessionTarget() => setSessionTargetDuration(null);
+
+  Duration? _clampSessionTarget(Duration? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value < kMetronomeSessionTargetMin) {
+      return kMetronomeSessionTargetMin;
+    }
+    if (value > kMetronomeSessionTargetMax) {
+      return kMetronomeSessionTargetMax;
+    }
+    return value;
+  }
+
+  void _cancelSessionEndTimer() {
+    _sessionEndTimer?.cancel();
+    _sessionEndTimer = null;
+  }
+
+  /// Wall-clock remainder until auto-stop; null if no target or not running.
+  Duration? get sessionRemainingOrNull {
+    final target = state.sessionTargetDuration;
+    if (target == null || !state.isRunning) {
+      return null;
+    }
+    final left = target - _stopwatch.elapsed;
+    return left <= Duration.zero ? Duration.zero : left;
+  }
+
   /// Monotonic time since last [start], for sweep UI; zero when not running.
   int get transportElapsedMicros =>
       state.isRunning ? _stopwatch.elapsedMicroseconds : 0;
@@ -180,6 +244,25 @@ class MetronomeNotifier extends Notifier<MetronomeState> {
       sessionBeatIndex: 0,
     );
     _scheduleNext(gen);
+    _scheduleSessionEndTimer();
+  }
+
+  void _scheduleSessionEndTimer() {
+    _cancelSessionEndTimer();
+    final target = state.sessionTargetDuration;
+    if (target == null || !state.isRunning) {
+      return;
+    }
+    final remaining = target - _stopwatch.elapsed;
+    if (remaining <= Duration.zero) {
+      stop();
+      return;
+    }
+    _sessionEndTimer = Timer(remaining, () {
+      if (state.isRunning) {
+        stop();
+      }
+    });
   }
 
   void _scheduleNext(int gen) {
@@ -227,6 +310,7 @@ class MetronomeNotifier extends Notifier<MetronomeState> {
     }
     _beatTimer?.cancel();
     _beatTimer = null;
+    _cancelSessionEndTimer();
     _scheduleGeneration++;
     _stopwatch.stop();
     state = state.copyWith(isRunning: false);

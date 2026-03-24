@@ -11,6 +11,7 @@ Personal hobby project: Flutter metronome + chromatic tuner. Privacy-ish by defa
 - BPM, time signatures, start/stop, tap tempo.
 - Timing is “real” (monotonic clock + scheduled delays), not a UI timer pretending to be audio; clicks through SoLoud.
 - Pretty beat sweep + flash on beats without melting the widget tree every frame.
+- **Session timer:** optional wall-clock target (preset or custom); elapsed + remaining on the metronome tab; auto-stop uses the same path as Stop. BPM/meter changes do not move the deadline. Stop, app background, or opening **Metronome sound** stops transport but keeps the chosen target until you clear it (**No limit**).
 - **Metronome sound** screen (from the Metronome tab): beat vs downbeat pitch, 440 vs 432 Hz, fake/analog waveforms, click length, echo/room vibes, preview that matches playback math.
 
 **Tuner**
