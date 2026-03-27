@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:metrotuner/core/app/package_info_provider.dart';
 import 'package:metrotuner/features/settings/accent_settings.dart';
 import 'package:metrotuner/features/settings/concert_pitch_section.dart';
 import 'package:metrotuner/features/settings/tuner_strip_edge_settings.dart';
@@ -109,23 +110,75 @@ class SettingsPage extends ConsumerWidget {
             );
             final maxBodyW =
                 (constraints.maxWidth - pad.horizontal).clamp(0.0, 640.0);
-            return Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: pad,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxBodyW),
-                    child: column,
+            final footerPad = EdgeInsets.fromLTRB(
+              pad.left,
+              m.scale(t.space8),
+              pad.right,
+              pad.bottom,
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        pad.left,
+                        pad.top,
+                        pad.right,
+                        0,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxBodyW),
+                          child: SingleChildScrollView(
+                            child: column,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                Padding(
+                  padding: footerPad,
+                  child: const Center(
+                    child: _SettingsVersionFooter(),
+                  ),
+                ),
+              ],
             );
           },
         ),
       ),
+    );
+  }
+}
+
+/// Shows `pubspec.yaml` version via [packageInfoProvider] (build-time metadata).
+class _SettingsVersionFooter extends ConsumerWidget {
+  const _SettingsVersionFooter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncInfo = ref.watch(packageInfoProvider);
+    final scheme = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final base = tt.labelSmall ?? const TextStyle(fontSize: 11);
+    return asyncInfo.when(
+      data: (info) => Text(
+        'Version ${info.version}',
+        style: base.copyWith(
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+          fontSize: (base.fontSize ?? 11) * 0.92,
+          height: 1.2,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      loading: () => SizedBox(height: (base.fontSize ?? 11) * 1.2),
+      error: (error, stackTrace) => const SizedBox.shrink(),
     );
   }
 }
