@@ -9,16 +9,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../integration_test/fake_tuner_notifier.dart';
 import 'support/pump_until.dart';
 
-/// Regenerate README images (1080×2400, same logical layout as Android tall phones):
-///
-/// ```bash
-/// flutter test test/readme_screenshots_test.dart --update-goldens
-/// ```
-///
-/// Then commit [docs/screenshots/*.png]. [PackageInfo.version] in overrides should
-/// match [pubspec.yaml] `version` (name part before `+`).
+/// Same navigation as README screenshots in docs/screenshots/ (those PNGs come from a
+/// release Android capture at 1080×2400; see docs/screenshots/README.md).
 void main() {
-  testWidgets('README screenshots (golden)', (tester) async {
+  testWidgets('README screenshot navigation smoke test', (tester) async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     await binding.setSurfaceSize(const Size(1080, 2400));
     addTearDown(() async {
@@ -44,21 +38,13 @@ void main() {
     await tester.pump();
     await pumpUntilFound(tester, find.text('Start'), maxPumps: 2000);
     await tester.pumpAndSettle();
-
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('../docs/screenshots/tuner.png'),
-    );
+    expect(find.text('Tuner'), findsWidgets);
 
     await tester.tap(find.text('Metronome'));
     await tester.pump();
     await pumpUntilFound(tester, find.text('BPM'), maxPumps: 2000);
     await tester.pumpAndSettle();
-
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('../docs/screenshots/metronome.png'),
-    );
+    expect(find.text('Metronome'), findsWidgets);
 
     await tester.tap(find.text('Tuner'));
     await tester.pump();
@@ -71,10 +57,6 @@ void main() {
     await tester.pumpAndSettle();
     await pumpUntilFound(tester, find.text('Version 1.1.1'), maxPumps: 2000);
     await tester.pumpAndSettle();
-
-    await expectLater(
-      find.byType(MaterialApp),
-      matchesGoldenFile('../docs/screenshots/settings.png'),
-    );
+    expect(find.text('Settings'), findsOneWidget);
   });
 }

@@ -12,11 +12,7 @@ Privacy-first **metronome** and **chromatic tuner** for Android and iOS (Flutter
 
 ## Screenshots
 
-Rendered at **1080×2400** (tall phone layout) via [`test/readme_screenshots_test.dart`](test/readme_screenshots_test.dart). Regenerate the PNGs after UI changes:
-
-```bash
-flutter test test/readme_screenshots_test.dart --update-goldens
-```
+**1080×2400** captures from a **release** Android build (emulator or device), so they match what users see. Regenerate after UI changes using `adb` — see [docs/screenshots/README.md](docs/screenshots/README.md). [`test/readme_screenshots_test.dart`](test/readme_screenshots_test.dart) runs a quick navigation smoke test only (no pixel goldens).
 
 Paths below are relative to the repo root so they render on GitHub.
 
