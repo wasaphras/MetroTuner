@@ -86,7 +86,7 @@ void main() {
     );
 
     expect(
-      find.bySemanticsLabel('Pitch strip, chromatic ruler from C2 through C6'),
+      find.bySemanticsLabel('Pitch strip, chromatic ruler from C2 through C8'),
       findsOneWidget,
     );
   });
@@ -126,7 +126,7 @@ void main() {
     );
     await tester.pump();
     expect(
-      find.bySemanticsLabel('Pitch strip, chromatic ruler from C2 through C6'),
+      find.bySemanticsLabel('Pitch strip, chromatic ruler from C2 through C8'),
       findsOneWidget,
     );
   });

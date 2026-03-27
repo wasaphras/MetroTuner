@@ -7,7 +7,7 @@ import 'package:metrotuner/core/pitch/note_math.dart';
 import 'package:metrotuner/core/pitch/pitch_types.dart';
 import 'package:metrotuner/ui/theme/metro_tuner_theme.dart';
 
-/// Chromatic ruler C2–C6 with cent subdivisions; [latestPitch] drives color and
+/// Chromatic ruler C2–C8 with cent subdivisions; [latestPitch] drives color and
 /// scroll position (smoothly interpolated).
 class PitchStrip extends StatefulWidget {
   /// Creates the pitch strip.
@@ -35,7 +35,7 @@ class PitchStrip extends StatefulWidget {
 class _PitchStripState extends State<PitchStrip>
     with SingleTickerProviderStateMixin {
   static const double _minMidi = 36;
-  static const double _maxMidi = 84;
+  static const double _maxMidi = 108;
   static const double _restMidi = 60;
 
   late Ticker _ticker;
@@ -159,7 +159,7 @@ class _PitchStripState extends State<PitchStrip>
 
     return RepaintBoundary(
       child: Semantics(
-        label: 'Pitch strip, chromatic ruler from C2 through C6',
+        label: 'Pitch strip, chromatic ruler from C2 through C8',
         child: Center(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(mt.radiusStrip),

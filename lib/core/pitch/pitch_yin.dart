@@ -12,7 +12,7 @@ abstract final class PitchYin {
     Float32List samples,
     int sampleRate, {
     double minHz = 70,
-    double maxHz = 2000,
+    double maxHz = 4200,
     double cmndThreshold = 0.2,
   }) {
     final n = samples.length;
