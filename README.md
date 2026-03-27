@@ -12,15 +12,19 @@ Privacy-first **metronome** and **chromatic tuner** for Android and iOS (Flutter
 
 ## Screenshots
 
-Captured from the Android build (1080×2400). Paths are relative to the repo root so they render on GitHub.
+Rendered at **1080×2400** (tall phone layout) via [`test/readme_screenshots_test.dart`](test/readme_screenshots_test.dart). Regenerate the PNGs after UI changes:
 
-| Tuner | Metronome |
-|:---:|:---:|
-| ![Tuner: pitch strip, readouts, Start](docs/screenshots/tuner.png) | ![Metronome: tempo, time signature, transport](docs/screenshots/metronome.png) |
+```bash
+flutter test test/readme_screenshots_test.dart --update-goldens
+```
 
-**Settings** — accent color, **concert pitch** (440 Hz or 432 Hz) for tuner and clicks, and pitch strip on the left or right (saved locally only).
+Paths below are relative to the repo root so they render on GitHub.
 
-![Settings: General — accent color and pitch strip](docs/screenshots/settings.png)
+| Tuner | Metronome | Settings |
+|:---:|:---:|:---:|
+| ![Tuner: pitch strip, readouts, Start](docs/screenshots/tuner.png) | ![Metronome: tempo, time signature, transport](docs/screenshots/metronome.png) | ![Settings: General — accent, concert pitch, pitch strip, version](docs/screenshots/settings.png) |
+
+**Settings** includes accent color, **concert pitch** (440 Hz or 432 Hz) for tuner and clicks, pitch strip on the left or right, and the app version line — all saved on this device only.
 
 More assets or recordings can live under [docs/screenshots/](docs/screenshots/) (see that folder’s README).
 

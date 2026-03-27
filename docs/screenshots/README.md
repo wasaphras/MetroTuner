@@ -12,9 +12,19 @@ Store **screenshots** or short **screen recordings** here for the main [README](
 
 Use **PNG** or **WebP**. Keep file sizes reasonable for GitHub (compress if a capture is huge).
 
-## Regenerating (Android emulator)
+## Regenerating (recommended)
 
-From the project root, with the app running on a device/emulator:
+From the project root, update the three README images at **1080×2400**:
+
+```bash
+flutter test test/readme_screenshots_test.dart --update-goldens
+```
+
+Keep the `version` string in that test’s [PackageInfo](https://pub.dev/documentation/package_info_plus/latest/package_info_plus/PackageInfo-class.html) override aligned with `pubspec.yaml` (the part before `+`) so the Settings screenshot matches releases.
+
+## Regenerating (Android emulator, manual)
+
+With the app running on a device/emulator:
 
 ```bash
 adb exec-out screencap -p > docs/screenshots/tuner.png
